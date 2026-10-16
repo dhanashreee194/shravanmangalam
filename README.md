@@ -110,7 +110,7 @@ npm run seed      # adds any starter texts that are missing (never overwrites yo
 ADMIN_PASSWORD=choose-a-strong-password npm start
 ```
 
-Open **http://localhost:4000/admin/**. Optional settings (environment variables):
+Open **http://localhost:4000/admin/**. Optional settings go in a private file **`cms/.env`** (git ignores it, so keys never reach GitHub), one per line, for example `SARVAM_API_KEY=…`. You can also set them as environment variables:
 
 | Variable | What it does |
 |---|---|

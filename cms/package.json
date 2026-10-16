@@ -4,7 +4,7 @@
   "description": "Shravan Mangalam CMS: admin panel, Voice Studio and API",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node --env-file-if-exists=.env server.js",
     "seed": "node seed.js"
   },
   "keywords": [],
