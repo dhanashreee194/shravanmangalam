@@ -96,7 +96,7 @@ function MalaRing({ size, count }: { size: number; count: number }) {
 export default function JapaScreen() {
   const { c, fs } = useTheme();
   const { lang } = useSettings();
-  const { mediaUrl } = useLibrary();
+  const { audio } = useLibrary();
   const s = t(lang);
   const mantras = useMantras();
   const chanter = useChanter();
@@ -160,7 +160,7 @@ export default function JapaScreen() {
         for (;;) {
           let played = false;
           for (const u of mantra.audio) {
-            const url = mediaUrl(u);
+            const url = audio(u);
             if (!url) continue;
             try {
               await chanter.playUrl(url, 1, token);

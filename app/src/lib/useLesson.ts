@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Cancelled, Chanter } from './chanter';
 import { TTS_LANG } from './i18n';
-import { useLibrary } from './library';
+import { AudioRef, useLibrary } from './library';
 import { sanskritForTts } from './pronounce';
 import { useProgress } from './progress';
 import { PROMPT_TEXT, PromptKey } from './prompts';
@@ -24,7 +24,7 @@ const MEANING_TTS = { rate: 0.88, pitch: 1 };
  */
 export function useLesson(item: Item | undefined, chanter: Chanter) {
   const { lang, speed, repeatCount, chime } = useSettings();
-  const { mediaUrl, promptUrl, markLearned } = useLibrary();
+  const { audio, promptUrl, markLearned } = useLibrary();
   const { practiced } = useProgress();
   const hiVoice = useVoice('hi');
   const meaningVoice = useVoice(lang);
@@ -43,7 +43,7 @@ export function useLesson(item: Item | undefined, chanter: Chanter) {
   const busy = phase !== 'idle' && phase !== 'done';
 
   /** Plays a recording; false if it can't be reached (so the caller can fall back). */
-  async function tryPlay(url: string, rate: number, token: number): Promise<boolean> {
+  async function tryPlay(url: AudioRef, rate: number, token: number): Promise<boolean> {
     try {
       await chanter.playUrl(url, rate, token);
       return true;
@@ -55,7 +55,7 @@ export function useLesson(item: Item | undefined, chanter: Chanter) {
 
   async function chantLine(i: number, token: number) {
     const l = lines[i];
-    const url = mediaUrl(l.audioUrl);
+    const url = audio(l.audioUrl);
     if (url) {
       try {
         return await chanter.playUrl(url, AUDIO_RATE[speedRef.current], token);
@@ -68,7 +68,7 @@ export function useLesson(item: Item | undefined, chanter: Chanter) {
   }
 
   async function chantAll(token: number) {
-    const full = mediaUrl(item?.fullAudioUrl);
+    const full = audio(item?.fullAudioUrl);
     if (full && (await tryPlay(full, AUDIO_RATE[speedRef.current], token))) return;
     for (let i = 0; i < lines.length; i++) {
       setIdx(i);
@@ -81,10 +81,10 @@ export function useLesson(item: Item | undefined, chanter: Chanter) {
     chanter.speak(text, { language: TTS_LANG[lang], voice: meaningVoice, ...MEANING_TTS }, token);
 
   /** A piece of speech: the owner's recording if there is one, otherwise the text for the phone voice. */
-  type Part = { url?: string; text: string };
+  type Part = { url?: AudioRef; text: string };
   async function speakParts(parts: Part[], token: number) {
     for (const part of parts) {
-      const url = mediaUrl(part.url);
+      const url = typeof part.url === 'number' ? part.url : audio(part.url);
       if (url) {
         try {
           await chanter.playUrl(url, 1, token);
@@ -182,7 +182,7 @@ export function useLesson(item: Item | undefined, chanter: Chanter) {
     run(async (token) => {
       if (!item) return;
       setPhase('meaning');
-      const url = mediaUrl(item.meaningAudio?.[lang]);
+      const url = audio(item.meaningAudio?.[lang]);
       if (url && (await tryPlay(url, 1, token))) return;
       // No summary recording yet: build it from the owner's other recordings where possible.
       await speakParts(

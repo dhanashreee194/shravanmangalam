@@ -64,6 +64,16 @@ Until a piece is recorded or filled, the app falls back to the phone's own voice
 
 If a word still sounds wrong, respell it in the line's "Pronunciation help for the voice" field in the CMS.
 
+### Bundling the voices into the app (works offline, no server)
+
+After recording or filling voices, pack them into the app so every phone plays them anywhere, even without internet:
+
+```bash
+cd cms && npm run voicepack
+```
+
+This copies every recording the app uses into `app/assets/voice/` (re-encoded to 48 kbps mono, about 16 MB for the whole library), writes `app/src/lib/voicepack.ts`, and refreshes the bundled library. Then rebuild the APK. The app plays the bundled copy first. If you later re-record something on the server, the app uses the new recording from the CMS when it can reach it, until you run `voicepack` again.
+
 ## Design
 
 "Krishna night": a deep Shyam-blue sky with twinkling stars and drifting glows, peacock teal, pitambar gold and lotus pink. It also has:

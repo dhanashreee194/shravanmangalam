@@ -50,7 +50,8 @@ export class Chanter {
     if (token !== this.run) throw new Cancelled();
   }
 
-  async playUrl(url: string, rate: number, token: number): Promise<number> {
+  /** Plays a recording: a URL, or an audio file bundled in the app (a require() number). */
+  async playUrl(url: string | number, rate: number, token: number): Promise<number> {
     this.check(token);
     if (!this.player) this.player = createAudioPlayer(null, { updateInterval: 200 });
     const player = this.player;
@@ -82,7 +83,7 @@ export class Chanter {
         done();
         reject(new Cancelled());
       };
-      player.replace({ uri: url });
+      player.replace(typeof url === 'number' ? url : { uri: url });
       player.setPlaybackRate(rate, 'high');
       player.play();
     });

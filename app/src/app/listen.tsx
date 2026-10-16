@@ -9,7 +9,7 @@ import { SoundWave } from '../components/Motion';
 import { useChanter } from '../lib/chanter';
 import { collectionsFor } from '../lib/collections';
 import { t } from '../lib/i18n';
-import { useLibrary } from '../lib/library';
+import { AudioRef, useLibrary } from '../lib/library';
 import { PromptKey } from '../lib/prompts';
 import { useSettings } from '../lib/settings';
 import { useTheme } from '../lib/theme';
@@ -17,7 +17,7 @@ import { pick } from '../lib/types';
 import { useLesson } from '../lib/useLesson';
 
 type Level = 'collections' | 'items' | 'lesson';
-type Part = { url?: string; text: string };
+type Part = { url?: AudioRef; text: string };
 
 const EMPTY = { hi: 'अभी कोई पाठ नहीं है।', en: 'Nothing here yet.' };
 

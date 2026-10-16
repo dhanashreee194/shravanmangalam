@@ -4,7 +4,11 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { Platform } from 'react-native';
 import { useSettings } from './settings';
 import type { PromptKey } from './prompts';
+import { VOICE_PACK } from './voicepack';
 import type { Item, Lang } from './types';
+
+/** Something the audio player can play: a bundled asset (number) or a URL. */
+export type AudioRef = string | number;
 
 const CACHE_KEY = 'library.cache.v2';
 // Copy of the library bundled into the app at build time, so it works on first launch even offline.
@@ -52,8 +56,10 @@ interface Ctx {
   server: string;
   refresh: () => Promise<void>;
   mediaUrl: (path?: string) => string | undefined;
+  /** A recording to play: the copy bundled in the app if there is one (works offline), else the server's. */
+  audio: (path?: string) => AudioRef | undefined;
   /** Full URL of the owner's recording of an app message, if it has been recorded. */
-  promptUrl: (key: PromptKey, lang: Lang) => string | undefined;
+  promptUrl: (key: PromptKey, lang: Lang) => AudioRef | undefined;
   learned: Set<string>;
   markLearned: (id: string) => void;
 }
@@ -97,13 +103,15 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => {
     const mediaUrl = (p?: string) => (!p ? undefined : /^https?:/.test(p) ? p : `${server}${p}`);
+    const audio = (p?: string): AudioRef | undefined => (p ? (VOICE_PACK[p] ?? mediaUrl(p)) : undefined);
     return {
       items,
       status,
       server,
       refresh,
       mediaUrl,
-      promptUrl: (key, lang) => mediaUrl(prompts[key]?.[lang]),
+      audio,
+      promptUrl: (key, lang) => audio(prompts[key]?.[lang]),
       learned,
       markLearned: (id) =>
         setLearned((prev) => {
