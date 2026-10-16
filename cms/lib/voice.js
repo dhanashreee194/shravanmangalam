@@ -113,7 +113,13 @@ export async function speakAsOwner(voiceId, text, kind) {
 }
 
 // ---------- Indian AI voice (Sarvam AI, bulbul:v4-flash) ----------
-export const INDIAN_KEY = process.env.SARVAM_API_KEY || '';
+// A key copied from an example (e.g. "your-key-here") is treated as no key, with a clear message.
+const RAW_INDIAN_KEY = (process.env.SARVAM_API_KEY || '').trim();
+export const INDIAN_KEY_PLACEHOLDER = /your|paste|here|xxx|<|>/i.test(RAW_INDIAN_KEY);
+export const INDIAN_KEY = INDIAN_KEY_PLACEHOLDER ? '' : RAW_INDIAN_KEY;
+if (INDIAN_KEY_PLACEHOLDER) {
+  console.warn('⚠️  SARVAM_API_KEY looks like example text ("' + RAW_INDIAN_KEY + '"). Replace it with your real key from dashboard.sarvam.ai → API Keys.');
+}
 const INDIAN_API = (process.env.SARVAM_API_URL || 'https://api.sarvam.ai').replace(/\/+$/, '');
 const INDIAN_MODEL = process.env.SARVAM_MODEL || 'bulbul:v4-flash';
 

@@ -341,7 +341,9 @@ function renderIndian() {
   const on = Boolean(voice.indianService);
   $('#indianNotice').innerHTML = on
     ? '✅ Indian voice service connected. Listen to a few voices, save your choice, then fill.'
-    : '🔑 To use the Indian voice, add your Sarvam AI key on the server: <code>SARVAM_API_KEY=…</code>, then restart the CMS. (Sign up at sarvam.ai — it gives free credits to start.)';
+    : voice.indianKeyPlaceholder
+      ? '⚠️ The Sarvam key is still the example text. Stop the CMS (Ctrl + C) and start it again with your <strong>real</strong> key from dashboard.sarvam.ai → API Keys: <code>SARVAM_API_KEY=your-real-key npm start</code>'
+      : '🔑 To use the Indian voice, add your Sarvam AI key on the server: <code>SARVAM_API_KEY=…</code>, then restart the CMS. (Sign up at sarvam.ai — it gives free credits to start.)';
   for (const id of ['#previewHi', '#previewEn', '#saveIndianBtn', '#fillIndianBtn']) $(id).disabled = !on;
 }
 

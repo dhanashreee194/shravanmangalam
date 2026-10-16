@@ -13,6 +13,7 @@ import {
   DEFAULT_INDIAN_VOICE,
   hasFfmpeg,
   INDIAN_KEY,
+  INDIAN_KEY_PLACEHOLDER,
   INDIAN_VOICES,
   normalizeAudio,
   speakAsOwner,
@@ -264,6 +265,7 @@ const voiceInfo = (db) => ({
   cloneService: Boolean(CLONE_KEY),
   // Indian AI voice (Sarvam): the owner's one choice for the whole app.
   indianService: Boolean(INDIAN_KEY),
+  indianKeyPlaceholder: INDIAN_KEY_PLACEHOLDER,
   indianVoices: INDIAN_VOICES,
   indianVoice: { ...DEFAULT_INDIAN_VOICE, ...(db.voice?.indian || {}) },
 });
