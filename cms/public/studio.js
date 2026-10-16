@@ -238,6 +238,8 @@ async function removeRecording() {
 // ---------- voice clone ----------
 let sampleRec = null;
 function renderVoice() {
+  // The voice clone is optional; show it only when the server has an ElevenLabs key.
+  $('#cloneCard').hidden = !voice.cloneService;
   $('#samples').innerHTML = voice.samples
     .map((u, i) => `<li><span>Sample ${i + 1}</span><audio controls preload="none" src="${esc(u)}"></audio><button class="btn ghost danger" data-del="${esc(u)}">Remove</button></li>`)
     .join('');
