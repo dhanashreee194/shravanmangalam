@@ -1,7 +1,8 @@
-// The app speaks in ONE voice: the owner's. Two ways to get it:
+// The app speaks in ONE voice, chosen by the owner — never by each user. In order:
 //   1. Recordings made in the Voice Studio (best — real chanting, real pronunciation).
-//   2. A clone of the owner's voice (ElevenLabs instant voice cloning) that fills anything
-//      not recorded yet. Enabled when ELEVENLABS_API_KEY is set.
+//   2. A clone of the owner's voice (ElevenLabs instant voice cloning). ELEVENLABS_API_KEY.
+//   3. An Indian devotional AI voice (Sarvam AI "Bulbul", trained on Indian speakers).
+//      SARVAM_API_KEY. The owner picks the voice once in the Voice Studio.
 // ffmpeg (if installed) cleans every recording: converts to M4A so iPhones can play it,
 // trims silence at both ends, and evens out the volume.
 import { execFile } from 'node:child_process';
@@ -109,4 +110,66 @@ export async function speakAsOwner(voiceId, text, kind) {
     }),
   });
   return Buffer.from(await res.arrayBuffer());
+}
+
+// ---------- Indian AI voice (Sarvam AI, bulbul:v4-flash) ----------
+export const INDIAN_KEY = process.env.SARVAM_API_KEY || '';
+const INDIAN_API = (process.env.SARVAM_API_URL || 'https://api.sarvam.ai').replace(/\/+$/, '');
+const INDIAN_MODEL = process.env.SARVAM_MODEL || 'bulbul:v4-flash';
+
+/** Indian voices offered in the Voice Studio. Devotional ones suit chanting; narration suits meanings. */
+export const INDIAN_VOICES = {
+  hi: [
+    { id: 'shubh_hi_devotional', name: 'Shubh — devotional' },
+    { id: 'girish_hi_devotional', name: 'Girish — devotional' },
+    { id: 'ratan_hi_devotional', name: 'Ratan — devotional' },
+    { id: 'nachiket_hi_devotional', name: 'Nachiket — devotional' },
+    { id: 'mani_hi_devotional', name: 'Mani — devotional' },
+    { id: 'ishita_hi_devotional', name: 'Ishita — devotional' },
+    { id: 'roopa_hi_narration', name: 'Roopa — narration' },
+    { id: 'shilpa_hi_narration', name: 'Shilpa — narration' },
+  ],
+  en: [
+    { id: 'girish_en_devotional', name: 'Girish — devotional (Indian English)' },
+    { id: 'shubh_en_narration_gentle', name: 'Shubh — gentle narration (Indian English)' },
+    { id: 'simran_en_narration', name: 'Simran — narration (Indian English)' },
+  ],
+};
+export const DEFAULT_INDIAN_VOICE = { hi: 'shubh_hi_devotional', en: 'girish_en_devotional' };
+
+/**
+ * Speaks text in the chosen Indian voice; returns MP3 bytes.
+ * kind 'chant' = a Sanskrit line: pronunciation rules + breaths applied, slower and steadier.
+ * lang 'hi' (also used for Sanskrit) or 'en' (Indian English meanings).
+ */
+export async function speakIndian(text, kind, lang, speaker) {
+  if (!INDIAN_KEY) throw new Error('SARVAM_API_KEY is not set on the server');
+  const isChant = kind === 'chant';
+  const body = {
+    text: isChant ? sanskritForTts(text) : text,
+    language_code: lang === 'en' ? 'en-IN' : 'hi-IN',
+    model: INDIAN_MODEL,
+    speaker: speaker || DEFAULT_INDIAN_VOICE[lang === 'en' ? 'en' : 'hi'],
+    pace: isChant ? 0.8 : 0.95,
+    speech_sample_rate: 24000,
+    output_audio_codec: 'mp3',
+  };
+  let res;
+  try {
+    res = await fetch(`${INDIAN_API}/text-to-speech`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'api-subscription-key': INDIAN_KEY },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    throw new Error(`Could not reach the Indian voice service (${err.cause?.code || err.message}). Check the internet connection.`);
+  }
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`Indian voice service error ${res.status}: ${detail.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  const audio = data.audios?.[0];
+  if (!audio) throw new Error('Indian voice service returned no audio');
+  return Buffer.from(audio, 'base64');
 }

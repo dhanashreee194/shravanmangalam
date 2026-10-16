@@ -36,7 +36,7 @@
         </div>
         <div class="legend">
           <span class="chip you">🎤 your recording</span>
-          <span class="chip clone">✨ your voice clone</span>
+          <span class="chip clone">✨ AI voice (Indian or clone)</span>
           <span class="chip none">○ not yet</span>
         </div>
       </div>
@@ -92,10 +92,36 @@
       <p class="keys muted">Shortcuts: <kbd>Space</kbd> record / stop · <kbd>Enter</kbd> save · <kbd>R</kbd> again · <kbd>←</kbd> <kbd>→</kbd> move</p>
     </section>
 
-    <!-- Step 2: voice clone -->
-    <section class="card">
+    <!-- Step 2: Indian AI voice -->
+    <section class="card" id="indianCard">
       <div class="step-head">
         <span class="step">2</span>
+        <div>
+          <h2>🇮🇳 Indian voice for everything not recorded yet</h2>
+          <p class="muted">Choose one devotional Indian voice for the whole app. It speaks with an Indian accent and the app's Sanskrit pronunciation rules (visarga, ॐ, breaths between padas). Your own recordings always come first.</p>
+        </div>
+      </div>
+      <div class="notice" id="indianNotice"></div>
+      <div class="voice-pick">
+        <label>Sanskrit &amp; Hindi voice <select id="indianHi"></select></label>
+        <button class="btn" id="previewHi">▶ Listen</button>
+      </div>
+      <div class="voice-pick">
+        <label>English voice (Indian English) <select id="indianEn"></select></label>
+        <button class="btn" id="previewEn">▶ Listen</button>
+      </div>
+      <audio id="previewAudio" hidden></audio>
+      <div class="row">
+        <button class="btn" id="saveIndianBtn">Save voice choice</button>
+        <button class="btn primary" id="fillIndianBtn">✨ Fill everything missing with this Indian voice</button>
+      </div>
+      <p class="muted" id="indianStatus"></p>
+    </section>
+
+    <!-- Step 3: voice clone -->
+    <section class="card">
+      <div class="step-head">
+        <span class="step">3</span>
         <div>
           <h2>Optional: let your voice clone fill the rest</h2>
           <p class="muted">Read the passage below for about 1–2 minutes. A voice clone made from it can speak anything you haven't recorded yet, in your voice. Your own recordings are never replaced.</p>

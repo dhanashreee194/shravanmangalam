@@ -7,7 +7,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { CLONE_KEY, createClone, hasFfmpeg, normalizeAudio, speakAsOwner } from './lib/voice.js';
+import {
+  CLONE_KEY,
+  createClone,
+  DEFAULT_INDIAN_VOICE,
+  hasFfmpeg,
+  INDIAN_KEY,
+  INDIAN_VOICES,
+  normalizeAudio,
+  speakAsOwner,
+  speakIndian,
+} from './lib/voice.js';
 import { listSlots, promptAudio, slotRef } from './lib/slots.js';
 import { SAMPLE_PASSAGE } from './content/prompts.js';
 
@@ -236,7 +246,12 @@ admin.use(requireAdmin);
 
 admin.get('/login', (_req, res) => res.json({ ok: true }));
 admin.get('/capabilities', async (_req, res) =>
-  res.json({ aiVoice: Boolean(CLONE_KEY && loadDb().voice?.voiceId), cloneService: Boolean(CLONE_KEY), ffmpeg: await hasFfmpeg() }),
+  res.json({
+    aiVoice: Boolean((CLONE_KEY && loadDb().voice?.voiceId) || INDIAN_KEY),
+    cloneService: Boolean(CLONE_KEY),
+    indianService: Boolean(INDIAN_KEY),
+    ffmpeg: await hasFfmpeg(),
+  }),
 );
 
 // ---------- Voice Studio: the whole app in the owner's voice ----------
@@ -247,6 +262,41 @@ const voiceInfo = (db) => ({
   voiceId: db.voice?.voiceId || null,
   clonedAt: db.voice?.clonedAt || null,
   cloneService: Boolean(CLONE_KEY),
+  // Indian AI voice (Sarvam): the owner's one choice for the whole app.
+  indianService: Boolean(INDIAN_KEY),
+  indianVoices: INDIAN_VOICES,
+  indianVoice: { ...DEFAULT_INDIAN_VOICE, ...(db.voice?.indian || {}) },
+});
+const indianVoiceOf = (db, lang) => ({ ...DEFAULT_INDIAN_VOICE, ...(db.voice?.indian || {}) })[lang === 'en' ? 'en' : 'hi'];
+const isIndianVoice = (lang, id) => (INDIAN_VOICES[lang] || []).some((v) => v.id === id);
+
+// Save the owner's choice of Indian voice (one for Hindi/Sanskrit, one for English).
+admin.post('/voice/indian', (req, res) => {
+  const db = loadDb();
+  db.voice ||= {};
+  const next = { ...DEFAULT_INDIAN_VOICE, ...(db.voice.indian || {}) };
+  for (const lang of ['hi', 'en']) {
+    const id = req.body?.[lang];
+    if (id === undefined) continue;
+    if (!isIndianVoice(lang, id)) return res.status(400).json({ error: `Unknown ${lang} voice: ${id}` });
+    next[lang] = id;
+  }
+  db.voice.indian = next;
+  saveDb(db);
+  res.json(voiceInfo(db));
+});
+
+// Hear a voice before choosing it: returns MP3.
+const PREVIEW = {
+  hi: { text: 'वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ । निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा ॥', kind: 'chant' },
+  en: { text: 'O Lord with the curved trunk, shining like a crore suns, please remove all obstacles from my work, always.', kind: 'speak' },
+};
+admin.post('/voice/preview', async (req, res) => {
+  const lang = LANG_OK(req.body?.lang) ? req.body.lang : 'hi';
+  const speaker = req.body?.speaker;
+  if (!isIndianVoice(lang, speaker)) return res.status(400).json({ error: 'Unknown voice' });
+  const audio = await speakIndian(PREVIEW[lang].text, PREVIEW[lang].kind, lang, speaker);
+  res.set('content-type', 'audio/mpeg').send(audio);
 });
 
 admin.get('/studio', (req, res) => {
@@ -317,9 +367,10 @@ admin.post('/voice/clone', async (_req, res) => {
 });
 
 /**
- * Fills the next few empty slots with the owner's cloned voice. The studio calls this
- * repeatedly (small batches keep each request short) until nothing is left.
- * Recordings the owner made are never touched; { redo: true } also refreshes clone audio.
+ * Fills the next few empty slots with an AI voice — the owner's clone ({ engine: 'clone' })
+ * or the chosen Indian voice ({ engine: 'indian' }). The studio calls this repeatedly (small
+ * batches keep each request short) until nothing is left. Recordings the owner made are never
+ * touched; { redo: true } also refreshes earlier AI audio.
  */
 admin.post('/voice/fill', async (req, res) => {
   const lang = LANG_OK(req.body?.lang) ? req.body.lang : 'hi';
@@ -327,12 +378,22 @@ admin.post('/voice/fill', async (req, res) => {
   const redo = req.body?.redo === true;
   const db = loadDb();
   const voiceId = db.voice?.voiceId;
-  if (!CLONE_KEY || !voiceId) return res.status(400).json({ error: 'Your voice clone is not set up yet' });
+  const cloneReady = Boolean(CLONE_KEY && voiceId);
+  const engine = req.body?.engine || (cloneReady ? 'clone' : 'indian');
+  if (engine === 'clone' && !cloneReady) return res.status(400).json({ error: 'Your voice clone is not set up yet' });
+  if (engine === 'indian' && !INDIAN_KEY) return res.status(400).json({ error: 'The Indian voice is not set up yet (SARVAM_API_KEY)' });
+  const speak = (slot) => {
+    const text = slot.mode === 'chant' ? slot.say || slot.text : slot.text;
+    if (engine === 'clone') return speakAsOwner(voiceId, text, slot.mode);
+    // Sanskrit lines always use the Hindi/Sanskrit voice; meanings and messages use the list's language.
+    const voiceLang = slot.mode === 'chant' ? 'hi' : lang;
+    return speakIndian(text, slot.mode, voiceLang, indianVoiceOf(db, voiceLang));
+  };
   const todo = listSlots(db, lang, sortItems).filter((s) => !s.url || (redo && s.ai));
   let made = 0;
   try {
     for (const slot of todo.slice(0, max)) {
-      const audio = await speakAsOwner(voiceId, slot.mode === 'chant' ? slot.say || slot.text : slot.text, slot.mode);
+      const audio = await speak(slot);
       const name = savedName('mp3');
       fs.writeFileSync(path.join(UPLOAD_DIR, name), audio);
       const ref = slotRef(db, slot.key);

@@ -28,11 +28,14 @@ function score(v: Voice): number {
   return s;
 }
 
-/** Voices for 'hi' or 'en', most natural first. English prefers Indian English. */
+/**
+ * Voices for 'hi' or 'en', most natural first — always Indian when the phone has one:
+ * hi-IN for Sanskrit/Hindi, and only en-IN (Indian English) for English if any is installed.
+ */
 export function rankVoices(voices: Voice[], lang: 'hi' | 'en'): Voice[] {
-  return voices
-    .filter((v) => norm(v.language).startsWith(lang) && !NOVELTY.test(v.name))
-    .sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));
+  const usable = voices.filter((v) => norm(v.language).startsWith(lang) && !NOVELTY.test(v.name));
+  const indian = usable.filter((v) => norm(v.language).endsWith('-in'));
+  return (indian.length ? indian : usable).sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));
 }
 
 /**

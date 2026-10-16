@@ -131,3 +131,6 @@ select { font: inherit; color: var(--text); background: var(--night-2); border: 
 .toast.err { background: var(--danger); color: #fff; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+.voice-pick { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 12px; }
+.voice-pick label { display: grid; gap: 6px; color: var(--muted); font-size: 14px; flex: 1; min-width: 240px; }
+.voice-pick select { width: 100%; max-width: none; padding: 10px 12px; font-size: 16px; }

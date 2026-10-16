@@ -49,9 +49,20 @@ Open **CMS → 🎙️ Voice Studio** (`/admin/studio.html`):
 
 1. **Record, line by line.** A large prompter shows each piece in order: the app messages first, then each shloka's title, chanted lines, line meanings and summary. Press <kbd>Space</kbd> to record and <kbd>Space</kbd> again to stop. It plays back, then <kbd>Enter</kbd> saves and moves to the next piece. <kbd>R</kbd> records again, and <kbd>←</kbd> <kbd>→</kbd> move between pieces. A progress bar shows how much is done. Switch हिंदी / English to record the meanings and messages in each language (chanted lines are shared).
    Every recording is cleaned automatically: silence trimmed at both ends, volume evened out, and converted so every phone can play it (needs `ffmpeg` on the server).
-2. **Optional: your voice clone fills the rest.** Read the sample passage (1–2 minutes total; it can be recorded in parts), tick the consent box, and create your clone. Then **✨ Fill everything missing in my voice** speaks every part you haven't recorded, in your cloned voice. Your own recordings are never replaced. This uses ElevenLabs voice cloning and needs `ELEVENLABS_API_KEY` on the server. For the best Sanskrit, record the chanted lines yourself and let the clone handle the meanings and messages.
+2. **Indian voice for the rest (recommended).** In the Voice Studio, pick **one devotional Indian voice** for the whole app (Shubh, Girish, Ratan, Nachiket, Mani or Ishita for Sanskrit and Hindi; Girish, Shubh or Simran for Indian English). ▶ Listen to each first, then **✨ Fill everything missing**. These are Sarvam AI's *Bulbul* voices, trained on Indian speakers, so they sound Indian and say Devanagari naturally. Needs `SARVAM_API_KEY` on the server (sarvam.ai gives free credits to start). Users can't change the voice; everyone hears the same one.
+3. **Optional: your voice clone fills the rest.** Read the sample passage (1–2 minutes total; it can be recorded in parts), tick the consent box, and create your clone. Then **✨ Fill everything missing in my voice** speaks every part you haven't recorded, in your cloned voice. Your own recordings are never replaced. This uses ElevenLabs voice cloning and needs `ELEVENLABS_API_KEY` on the server. For the best Sanskrit, record the chanted lines yourself and let the clone handle the meanings and messages.
 
-Until a piece is recorded, the app falls back to the phone's most natural installed voice, with Sanskrit pronunciation fixes: ॐ → "ओम्", visarga with its echo vowel (नमः → नमह), and word-final anusvara as "m" (मधुरं → मधुरम्).
+Until a piece is recorded or filled, the app falls back to the phone's own voice, always an Indian one (hi-IN, and en-IN for English) when the phone has it.
+
+**Sanskrit pronunciation fixes** (applied to the Indian voice, the clone and the phone fallback):
+- ॐ is held with a pause ("ओम्, …")
+- visarga with its echo vowel (नमः → नमह, हरिः → हरिहि)
+- word-final anusvara as "m" (मधुरं → मधुरम्)
+- a **breath between the two padas** of every verse line (*यदा यदा हि धर्मस्य, ग्लानिर्भवति भारत*), found by counting aksharas
+- no reading of ऽ, hidden joiners or verse numbers
+- pauses at । and ॥
+
+If a word still sounds wrong, respell it in the line's "Pronunciation help for the voice" field in the CMS.
 
 ## Design
 
@@ -104,6 +115,7 @@ Open **http://localhost:4000/admin/**. Optional settings (environment variables)
 | Variable | What it does |
 |---|---|
 | `ADMIN_PASSWORD` | Admin login password (default `admin123`; change it) |
+| `SARVAM_API_KEY` | Turns on the Indian devotional voice (Sarvam AI Bulbul) for unrecorded parts |
 | `ELEVENLABS_API_KEY` | Turns on the voice clone (fills unrecorded parts in your voice) |
 | `ELEVENLABS_MODEL` | Default `eleven_multilingual_v2` (speaks Hindi) |
 | `DATA_DIR`, `UPLOAD_DIR` | Where the library and audio files are stored (use a persistent disk when hosting) |

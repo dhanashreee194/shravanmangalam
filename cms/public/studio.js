@@ -94,6 +94,7 @@ async function load(keepKey = currentKey) {
   renderJump();
   renderSlot();
   renderVoice();
+  renderIndian();
 }
 
 const visible = () => ($('#onlyMissing').checked ? slots.filter((s) => !s.url || s.key === currentKey) : slots);
@@ -104,7 +105,7 @@ function renderProgress() {
   const you = slots.filter((s) => s.url && !s.ai).length;
   const clone = slots.filter((s) => s.url && s.ai).length;
   const total = slots.length || 1;
-  $('#progressText').textContent = `${you} recorded by you · ${clone} by your voice clone · ${slots.length - you - clone} still to do (of ${slots.length})`;
+  $('#progressText').textContent = `${you} recorded by you · ${clone} by AI voice · ${slots.length - you - clone} still to do (of ${slots.length})`;
   $('#barYou').style.width = `${(you / total) * 100}%`;
   $('#barClone').style.width = `${(clone / total) * 100}%`;
 }
@@ -139,7 +140,7 @@ function renderSlot(animate = false) {
       : lang === 'hi' ? 'स्वाभाविक, प्रेम भरी आवाज़ में बोलें।' : 'Speak naturally and warmly.';
   const chip = $('#slotStatus');
   chip.className = 'status-chip ' + (s.url ? (s.ai ? 'clone' : 'you') : 'none');
-  chip.textContent = s.url ? (s.ai ? '✨ your voice clone' : '🎤 your recording') : '○ not recorded yet';
+  chip.textContent = s.url ? (s.ai ? '✨ AI voice' : '🎤 your recording') : '○ not recorded yet';
   const audio = $('#current');
   audio.hidden = !s.url;
   if (s.url) audio.src = s.url;
@@ -314,7 +315,7 @@ $('#fillBtn').addEventListener('click', async () => {
       const r = await api('/api/admin/voice/fill', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ lang, max: 6 }),
+        body: JSON.stringify({ lang, max: 6, engine: 'clone' }),
       });
       made += r.made;
       $('#fillStatus').textContent = `✨ ${made} done · ${r.remaining} left — keep this page open`;
@@ -324,6 +325,88 @@ $('#fillBtn').addEventListener('click', async () => {
     await load();
   } catch (err) {
     $('#fillStatus').textContent = '';
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ---------- Indian AI voice ----------
+function renderIndian() {
+  const fill = (sel, list, chosen) => {
+    sel.innerHTML = list.map((v) => `<option value="${esc(v.id)}"${v.id === chosen ? ' selected' : ''}>${esc(v.name)}</option>`).join('');
+  };
+  fill($('#indianHi'), voice.indianVoices?.hi || [], voice.indianVoice?.hi);
+  fill($('#indianEn'), voice.indianVoices?.en || [], voice.indianVoice?.en);
+  const on = Boolean(voice.indianService);
+  $('#indianNotice').innerHTML = on
+    ? '✅ Indian voice service connected. Listen to a few voices, save your choice, then fill.'
+    : '🔑 To use the Indian voice, add your Sarvam AI key on the server: <code>SARVAM_API_KEY=…</code>, then restart the CMS. (Sign up at sarvam.ai — it gives free credits to start.)';
+  for (const id of ['#previewHi', '#previewEn', '#saveIndianBtn', '#fillIndianBtn']) $(id).disabled = !on;
+}
+
+async function preview(langCode, sel, btn) {
+  btn.disabled = true;
+  const label = btn.textContent;
+  btn.textContent = '… loading';
+  try {
+    const res = await fetch('/api/admin/voice/preview', {
+      method: 'POST',
+      headers: { 'x-admin-key': adminKey, 'content-type': 'application/json' },
+      body: JSON.stringify({ lang: langCode, speaker: $(sel).value }),
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `Preview failed (${res.status})`);
+    const a = $('#previewAudio');
+    a.src = URL.createObjectURL(await res.blob());
+    await a.play();
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+}
+$('#previewHi').addEventListener('click', () => preview('hi', '#indianHi', $('#previewHi')));
+$('#previewEn').addEventListener('click', () => preview('en', '#indianEn', $('#previewEn')));
+
+async function saveIndian() {
+  voice = await api('/api/admin/voice/indian', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ hi: $('#indianHi').value, en: $('#indianEn').value }),
+  });
+  renderIndian();
+}
+$('#saveIndianBtn').addEventListener('click', async () => {
+  try {
+    await saveIndian();
+    toast('Voice choice saved ✓');
+  } catch (err) {
+    toast(err.message, true);
+  }
+});
+
+$('#fillIndianBtn').addEventListener('click', async () => {
+  if (!confirm('Fill every part you have not recorded with the chosen Indian voice? Your own recordings stay as they are.')) return;
+  const btn = $('#fillIndianBtn');
+  btn.disabled = true;
+  let made = 0;
+  try {
+    await saveIndian();
+    for (;;) {
+      const r = await api('/api/admin/voice/fill', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ lang, max: 6, engine: 'indian' }),
+      });
+      made += r.made;
+      $('#indianStatus').textContent = `🇮🇳 ${made} done · ${r.remaining} left — keep this page open`;
+      if (!r.remaining || !r.made) break;
+    }
+    $('#indianStatus').textContent = `🇮🇳 Done — ${made} parts now speak in the Indian voice (${lang === 'hi' ? 'हिंदी' : 'English'}). Switch language at the top to fill the other one.`;
+    await load();
+  } catch (err) {
+    $('#indianStatus').textContent = '';
     toast(err.message, true);
   } finally {
     btn.disabled = false;
