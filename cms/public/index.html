@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shravan Mangalam CMS</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="feather" aria-hidden="true">🦚</span> <span>Shravan Mangalam CMS</span> <span class="brand-sub">॥ श्री कृष्णः शरणं मम ॥</span></div>
+    <div class="topbar-actions" id="topbarActions" hidden>
+      <button class="btn ghost" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <!-- Login -->
+  <main id="loginView" class="center-view">
+    <form id="loginForm" class="card login-card">
+      <h1>Admin login</h1>
+      <p class="muted">Enter the admin password to manage shlokas, mantras and bhajans.</p>
+      <label>Password
+        <input type="password" id="password" autocomplete="current-password" required />
+      </label>
+      <p class="error" id="loginError" hidden></p>
+      <button class="btn primary" type="submit">Log in</button>
+    </form>
+  </main>
+
+  <!-- List -->
+  <main id="listView" class="page" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Library</h1>
+        <p class="muted" id="countLabel"></p>
+      </div>
+      <div class="row-gap">
+        <a class="btn studio-link" href="studio.html">🎙️ Voice Studio — record in your voice</a>
+        <button class="btn primary" id="newBtn">+ Add new</button>
+      </div>
+    </div>
+    <div class="notice" id="voiceNotice" hidden></div>
+    <div class="filters">
+      <input type="search" id="search" placeholder="Search by title, deity, tag…" />
+      <select id="typeFilter"><option value="">All types</option></select>
+      <select id="statusFilter">
+        <option value="">Published &amp; drafts</option>
+        <option value="published">Published</option>
+        <option value="draft">Drafts</option>
+      </select>
+    </div>
+    <div id="itemList" class="item-list"></div>
+  </main>
+
+  <!-- Editor -->
+  <main id="editView" class="page" hidden>
+    <div class="page-head">
+      <div>
+        <button class="btn ghost small" id="backBtn">← Back to library</button>
+        <h1 id="editTitle">New item</h1>
+      </div>
+      <div class="row-gap">
+        <button class="btn danger" id="deleteBtn" hidden>Delete</button>
+        <button class="btn primary" id="saveBtn">Save</button>
+      </div>
+    </div>
+
+    <form id="editForm" class="editor" novalidate>
+      <section class="card">
+        <h2>Basics</h2>
+        <div class="grid-2">
+          <label>Title (English) <input name="title_en" placeholder="e.g. Gayatri Mantra" /></label>
+          <label>Title (हिंदी) <input name="title_hi" placeholder="e.g. गायत्री मंत्र" /></label>
+          <label>Type <select name="type" id="typeSelect"></select></label>
+          <label>Level <select name="level" id="levelSelect"></select></label>
+          <label>Deity <input name="deity" placeholder="e.g. Ganesha, Shiva, Krishna" /></label>
+          <label>Tags (comma separated) <input name="tags" placeholder="krishna, gita, morning" /></label>
+          <label>Source / reference <input name="source" placeholder="e.g. Bhagavad Gita 4.7, Shrimad Bhagavatam 10.31.1" /></label>
+          <label>Display order <input name="order" type="number" value="100" /></label>
+          <label class="check"><input type="checkbox" name="published" checked /> Published (visible in app)</label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Overall meaning</h2>
+        <div class="grid-2">
+          <label>Meaning summary (English) <textarea name="summary_en" rows="3"></textarea></label>
+          <label>Meaning summary (हिंदी) <textarea name="summary_hi" rows="3"></textarea></label>
+          <label>When to chant (English) <input name="whenToChant_en" placeholder="e.g. Before starting any new work" /></label>
+          <label>When to chant (हिंदी) <input name="whenToChant_hi" /></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>Lines</h2>
+          <button type="button" class="btn ghost small" id="pasteBtn">Paste whole text</button>
+        </div>
+        <p class="muted">Each line is learned on its own in the app's “Repeat after me” mode. <strong>For the most human sound, record each line</strong> (🎤 — a pandit, a devotee, a grandparent) or upload a recording. Lines without a recording use the natural AI voice (✨) if set up, otherwise the phone's voice.</p>
+        <div id="pasteBox" class="paste-box" hidden>
+          <label>Paste the shloka, one line per row
+            <textarea id="pasteText" rows="6" placeholder="वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ ।&#10;निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा ॥"></textarea>
+          </label>
+          <div class="row-gap">
+            <button type="button" class="btn small primary" id="pasteApply">Replace lines</button>
+            <button type="button" class="btn small ghost" id="pasteCancel">Cancel</button>
+          </div>
+        </div>
+        <div id="lines"></div>
+        <button type="button" class="btn ghost" id="addLineBtn">+ Add line</button>
+      </section>
+
+      <section class="card">
+        <h2>Audio &amp; image</h2>
+        <div class="grid-2">
+          <div class="file-field" data-key="fullAudio">
+            <span class="label">Full chant recording</span>
+            <div class="current"></div>
+            <input type="file" accept="audio/*" />
+          </div>
+          <div class="file-field" data-key="image">
+            <span class="label">Picture (deity / illustration)</span>
+            <div class="current"></div>
+            <input type="file" accept="image/*" />
+          </div>
+          <div class="file-field" data-key="meaningAudio_en">
+            <span class="label">Meaning explained — English audio</span>
+            <div class="current"></div>
+            <input type="file" accept="audio/*" />
+          </div>
+          <div class="file-field" data-key="meaningAudio_hi">
+            <span class="label">Meaning explained — हिंदी audio</span>
+            <div class="current"></div>
+            <input type="file" accept="audio/*" />
+          </div>
+        </div>
+        <p class="muted">Tip: MP3 or M4A files play on both Android and iPhone. Avoid WebM/OGG — iPhones may not play them.</p>
+      </section>
+    </form>
+  </main>
+
+  <template id="lineTpl">
+    <div class="line card inner">
+      <div class="line-head">
+        <strong class="line-no"></strong>
+        <div class="row-gap">
+          <button type="button" class="btn ghost small" data-act="up" title="Move up">↑</button>
+          <button type="button" class="btn ghost small" data-act="down" title="Move down">↓</button>
+          <button type="button" class="btn ghost small danger-text" data-act="remove">Remove</button>
+        </div>
+      </div>
+      <div class="grid-2">
+        <label>Text (Devanagari) <textarea data-f="text" rows="2" class="deva"></textarea></label>
+        <label>Pronunciation (English letters) <textarea data-f="transliteration" rows="2"></textarea></label>
+        <label>Meaning (English) <textarea data-f="meaning_en" rows="2"></textarea></label>
+        <label>Meaning (हिंदी) <textarea data-f="meaning_hi" rows="2"></textarea></label>
+        <label class="span-2">Pronunciation help for the voice (optional)
+          <textarea data-f="say" rows="1" class="deva" placeholder="Only if the voice says a word wrongly — respell it, e.g. रामः → रामह, मधुरं → मधुरम्"></textarea>
+        </label>
+      </div>
+      <div class="file-field line-audio">
+        <span class="label">Recording of this line</span>
+        <div class="current"></div>
+        <div class="row-gap">
+          <button type="button" class="btn small rec-btn" data-rec>🎤 Record</button>
+          <input type="file" accept="audio/*" />
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="admin.js"></script>
+</body>
+</html>

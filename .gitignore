@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Generated native projects (recreated by `npx expo prebuild`)
+app/android/
+app/ios/
+
+# Builds
+*.apk
+*.aab
+app/dist/
+
+# CMS runtime data: the library is recreated with `npm run seed`;
+# recordings live on the server, not in git
+cms/data/db.json
+cms/data/*.tmp
+cms/uploads/*
+!cms/uploads/.gitkeep
+
+# Secrets and local settings
+.env
+.env.*
+*.keystore
+*.jks
+
+# Editor / OS
+.DS_Store
+.claude/

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice Studio · Shravan Mangalam</title>
+  <link rel="stylesheet" href="studio.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="stars" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <a class="back" href="./">← Library</a>
+      <div class="hero-title">
+        <span class="feather" aria-hidden="true">🦚</span>
+        <div>
+          <p class="blessing">॥ श्री कृष्णः शरणं मम ॥</p>
+          <h1>Voice Studio</h1>
+          <p class="sub">The whole app will speak and chant in <strong>your</strong> voice.</p>
+        </div>
+      </div>
+      <div class="lang" role="radiogroup" aria-label="Language of meanings and messages">
+        <button role="radio" data-lang="hi" aria-checked="true">हिंदी</button>
+        <button role="radio" data-lang="en" aria-checked="false">English</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <!-- Progress -->
+    <section class="card progress-card">
+      <div class="progress-head">
+        <div>
+          <h2>Your voice in the app</h2>
+          <p class="muted" id="progressText">Loading…</p>
+        </div>
+        <div class="legend">
+          <span class="chip you">🎤 your recording</span>
+          <span class="chip clone">✨ your voice clone</span>
+          <span class="chip none">○ not yet</span>
+        </div>
+      </div>
+      <div class="bar" aria-hidden="true"><span class="you" id="barYou"></span><span class="clone" id="barClone"></span></div>
+    </section>
+
+    <!-- Step 1: record -->
+    <section class="card studio">
+      <div class="step-head">
+        <span class="step">1</span>
+        <div>
+          <h2>Record, line by line</h2>
+          <p class="muted">Read or chant what you see, slowly and clearly. Your real chanting gives the best pronunciation.</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <label>Jump to <select id="jump"></select></label>
+        <label class="check"><input type="checkbox" id="onlyMissing" /> Only show what's missing</label>
+        <label class="check"><input type="checkbox" id="autoNext" checked /> Go to next after saving</label>
+      </div>
+
+      <div class="prompter" id="prompter">
+        <div class="prompter-top">
+          <span class="where" id="where"></span>
+          <span class="status-chip" id="slotStatus"></span>
+        </div>
+        <p class="label" id="slotLabel"></p>
+        <p class="text" id="slotText" lang="hi"></p>
+        <p class="translit" id="slotTranslit"></p>
+        <p class="hint" id="slotHint"></p>
+        <audio id="current" controls preload="none" hidden></audio>
+      </div>
+
+      <canvas id="meter" class="meter" width="640" height="56" aria-hidden="true"></canvas>
+
+      <div class="controls">
+        <button class="nav" id="prevBtn" title="Previous (←)">←</button>
+        <button class="rec" id="recBtn" title="Record / stop (Space)"><span class="dot"></span><span id="recLabel">Record</span></button>
+        <button class="nav" id="nextBtn" title="Next (→)">→</button>
+      </div>
+      <div class="after" id="after" hidden>
+        <audio id="preview" controls></audio>
+        <div class="row">
+          <button class="btn primary" id="saveBtn">✓ Save <kbd>Enter</kbd></button>
+          <button class="btn" id="redoBtn">↻ Record again <kbd>R</kbd></button>
+          <button class="btn ghost" id="discardBtn">Discard</button>
+        </div>
+      </div>
+      <div class="row end">
+        <button class="btn ghost danger" id="deleteBtn" hidden>Delete this recording</button>
+      </div>
+      <p class="keys muted">Shortcuts: <kbd>Space</kbd> record / stop · <kbd>Enter</kbd> save · <kbd>R</kbd> again · <kbd>←</kbd> <kbd>→</kbd> move</p>
+    </section>
+
+    <!-- Step 2: voice clone -->
+    <section class="card">
+      <div class="step-head">
+        <span class="step">2</span>
+        <div>
+          <h2>Optional: let your voice clone fill the rest</h2>
+          <p class="muted">Read the passage below for about 1–2 minutes. A voice clone made from it can speak anything you haven't recorded yet, in your voice. Your own recordings are never replaced.</p>
+        </div>
+      </div>
+      <div class="passage" id="passage" lang="hi"></div>
+      <div class="row">
+        <button class="btn" id="sampleBtn">🎤 Record voice sample</button>
+        <span class="muted" id="sampleTimer"></span>
+      </div>
+      <ul class="samples" id="samples"></ul>
+      <div class="notice" id="cloneNotice"></div>
+      <label class="check consent"><input type="checkbox" id="consent" /> This is my own voice and I agree to it being cloned for this app.</label>
+      <div class="row">
+        <button class="btn primary" id="cloneBtn" disabled>Create my voice clone</button>
+        <button class="btn" id="fillBtn" disabled>✨ Fill everything missing in my voice</button>
+      </div>
+      <p class="muted" id="fillStatus"></p>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="studio.js"></script>
+</body>
+</html>
